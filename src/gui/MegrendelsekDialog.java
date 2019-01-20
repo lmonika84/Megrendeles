@@ -13,6 +13,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import model.IModell;
 import model.Rendeles;
@@ -22,7 +24,7 @@ import model.Szemely;
  *
  * @author monika.lohr
  */
-public class MegrendelsekDialog extends javax.swing.JDialog {
+public class MegrendelsekDialog extends javax.swing.JDialog implements TableModelListener {
 
    private IModell model;
    private Frame parent; 
@@ -37,6 +39,8 @@ public class MegrendelsekDialog extends javax.swing.JDialog {
         initComponents();
         setLocationRelativeTo(parent);
         setTitle("Megrendelések kezelése");
+        
+        DefaultTableModel dtm = (DefaultTableModel) tblMegrendelesek.getModel();
         
        try {
            megrendelok = model.getSzemelyek();
@@ -254,5 +258,38 @@ public class MegrendelsekDialog extends javax.swing.JDialog {
 //           JOptionPane.showMessageDialog(rootPane, ex, "Adatbázis hiba", JOptionPane.ERROR_MESSAGE
 //           );
 //       }
+    }
+
+    @Override
+    public void tableChanged(TableModelEvent e) {
+        DefaultTableModel dtm = (DefaultTableModel) tblMegrendelesek.getModel();
+                      
+           int sorIndex = e.getFirstRow();
+           int oszlopIndex = e.getColumn();
+           
+        if(e.getType()==TableModelEvent.UPDATE && sorIndex>=0 && oszlopIndex>=0){
+         
+           Object ujErtek = dtm.getValueAt(sorIndex,oszlopIndex);
+           
+           Rendeles selected = megrendelesek.get(sorIndex);
+           
+           switch (oszlopIndex){
+               case 0: selected.setOsszeg((Integer) ujErtek);
+                    break;
+               case 1: selected.setDarabszam((Integer) ujErtek);
+                    break;
+               case 2: selected.setTeljesitve((Boolean) ujErtek);
+                    break;
+           }
+           
+            try {
+                model.updateRendeles(selected);
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(rootPane, ex, "Adatbázis hiba", JOptionPane.ERROR_MESSAGE );
+            }
+           
+        
+            
+        }
     }
 }
